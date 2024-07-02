@@ -52,6 +52,19 @@ public:
     }
 };
 
+class Necromancer : public IMobs
+{
+public:
+    void BattleRoar() override
+    {
+        cout << "Некромант издает боевой клич!" << endl;
+    }
+    string ToString()
+    {
+        return "Некромант";
+    }
+};
+
 __interface IMobsFactory
 {
     virtual string ToString() = 0;
@@ -63,14 +76,15 @@ class EasyLvlMobsFactory : public IMobsFactory
 public:
     IMobs* Create() override
     {
-        string mobs[] = {
+        auto mobs = make_unique<vector<string>>(
+            initializer_list<string> {
             "Лучник",
-            "Маг",
-            "Рыцарь"
-        };
+                "Маг",
+                "Рыцарь"
+        });
 
-        int randIndex = rand() % 3;
-        string mobType = mobs[randIndex];
+        int randIndex = rand() % mobs->size();
+        string mobType = mobs->at(randIndex);
 
         if (mobType == "Лучник")
         {
@@ -105,8 +119,17 @@ public:
             m_hardMobsCount++;
             return new Knight();
         }
-        m_easyFactory = new EasyLvlMobsFactory();
-        return m_easyFactory->Create();
+
+        // Создать объект EasyLvlMobsFactory.
+        auto* easyFactory = new EasyLvlMobsFactory();
+
+        // Создать объект IMobs с использованием фабрики.
+        auto* mobs = easyFactory->Create();
+
+        // Удалить объект фабрики.
+        delete easyFactory;
+
+        return mobs;
     }
     string ToString()
     {
@@ -115,20 +138,21 @@ public:
 
 private:
     int m_hardMobsCount = 0;
-    IMobsFactory* m_easyFactory = nullptr;
 };
+
 
 class HardLvlMobsFactory : public IMobsFactory
 {
 public:
     IMobs* Create() override
     {
-        string mobs[] = {
+        vector<string> mobs = {
             "Маг",
-            "Рыцарь"
+            "Рыцарь",
+            "Некромант"
         };
 
-        int randIndex = rand() % 2;
+        int randIndex = rand() % mobs.size();
         string mobType = mobs[randIndex];
 
         if (mobType == "Маг")
@@ -139,16 +163,22 @@ public:
         {
             return new Knight();
         }
+        else if (mobType == "Некромант")
+        {
+            return new Necromancer();
+        }
         else
         {
             throw invalid_argument("Неизвестный тип моба");
         }
     }
+
     string ToString()
     {
         return "Сложный уровень";
     }
 };
+
 
 class Tree
 {
